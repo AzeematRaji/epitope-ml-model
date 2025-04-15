@@ -504,7 +504,11 @@ This workflow triggers everytime there is a push to the repository. It will auto
 - GitHub secrets must be properly configured in the repository to handle sensitive data like DockerHub credentials and EC2 SSH keys. This is crucial for security.
   
 ### Conclusion
+This project aims to provide a solution that helps researchers in low-resource settings predict epitope regions in protein sequences, a crucial task in vaccine and antibody development. The trained XGBoost model, which predicts whether a part of a protein sequence is an epitope or not, has been deployed as an easy-to-use API. This allows researchers, even without data science knowledge, to quickly make predictions using only a protein sequence as input. By automating this process and making it accessible via the cloud, researchers in under-resourced areas can save time and resources that would otherwise be spent on manual analysis.
 
+Also, the use of cloud automation in this project ensures that the model is scalable, reliable, and available to users anywhere. By hosting the model in the cloud, we can provide researchers with seamless access to the predictions without the need for expensive local infrastructure. Cloud-based solutions also make it easier to maintain and update the model as new data becomes available, ensuring that the tool remains effective over time. Automating the deployment of the model using GitHub Actions ensures that the latest version of the model is always deployed efficiently, reducing the chances of errors and making the system more robust.
+
+Lastly, the combination of machine learning model deployment in the cloud and the automation of the process helps make advanced research tools available to everyone, regardless of their location or available resources, ultimately supporting the advancement of science and healthcare.
 
 
 
