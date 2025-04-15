@@ -52,11 +52,8 @@ activate the environment:
 ``` text
 epitope-ml-model/
 │
-├── app/                          
-│   ├── __init__.py
-│   ├── main.py                   # API endpoints
-│   ├── model.py                  # Model loading + prediction logic
-│   └── utils.py                  # Featurization, preprocessing functions
+├── app/                                    
+│   └── main.py                  
 │
 ├── model/                                                    
 │   ├── epitope_model.joblib               
