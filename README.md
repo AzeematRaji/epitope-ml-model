@@ -78,7 +78,7 @@ epitope-ml-model/
 ├── README.md                     
 └── .github/
     └── workflows/
-        └── deploy.yaml
+        └── deployment.yaml
 ```
 
 ### Download a dataset
@@ -94,6 +94,7 @@ __Task__: Given a protein sequence, predict the epitope regions.
 - Non epitopee - Lowercase
   
 __Size__: 3560 sequences
+
 __Source__: [BepiPred 3.0 - DTU Health Tech](https://services.healthtech.dtu.dk/services/BepiPred-3.0/)
 
 __Model Output__:
@@ -394,7 +395,7 @@ Make predictions
    
 Create a simple FastAPI application that loads the saved model and exposes an endpoint for predictions.
 
-`uvicorn main:app --host 0.0.0.0 --port 8000 --reload`
+`uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
 
 3. Access the API from the Browser
    
@@ -422,17 +423,16 @@ xgboost
 2. Create a `Dockerfile`
 
 ```
-FROM python:3.10-slim
+FROM python:3.12-slim
+
 WORKDIR /app
+COPY . /app
 
-COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 3. Build and Run the Docker Image in Cloud environment
@@ -456,14 +456,15 @@ name: Build and Deploy to EC2
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-
+  build:
+    runs-on: ubuntu-latest  
+    
     steps:
-    - name: Checkout Code
+    - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Set up Docker Buildx
@@ -472,15 +473,14 @@ jobs:
     - name: Log in to DockerHub
       uses: docker/login-action@v2
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        username: ${{ secrets.DOCKER_USERNAME }}  
+        password: ${{ secrets.DOCKER_PASSWORD }}  
 
-    - name: Build and Push Docker Image to DockerHub
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/epitope-model-api:latest
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/epitope-model-api:latest .
+
+    - name: Push Docker image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/epitope-model-api:latest
 
     - name: Deploy to EC2 via SSH
       uses: appleboy/ssh-action@v1.0.0
@@ -494,6 +494,7 @@ jobs:
           docker rm epitope-api || true
           docker run -d --name epitope-api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/epitope-model-api:latest
 ```
+
 This workflow triggers everytime there is a push to the repository. It will automatically containerize the app, pushed to dockerhub and deploy it on EC2 that is already provisioned. This eliminate the need to deploy manually deploy everytime there is change to the code
 
 #### Suggestions
