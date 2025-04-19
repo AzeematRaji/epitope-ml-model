@@ -106,7 +106,7 @@ Binary prediction for each amino acid in the sequence:
 
 #### Steps to downloading dataset
 
-1- Used Jupyter Notebook for Interactive Exploration
+1. Used Jupyter Notebook for Interactive Exploration
 
 Check the notebook: notebooks/epitope_exploration.ipynb
 
@@ -124,7 +124,7 @@ Launch Jupyter:
 
 Then run the following code to download and explore the dataset
 
-2- To retrieve dataset from BepiPred, 
+2. To retrieve dataset from BepiPred, 
 
 ```
 import requests
@@ -144,7 +144,7 @@ for record in SeqIO.parse(fasta_file, 'fasta'):
     sequences.append(str(record.seq))
 ```
 
-3- Use Python Script for Automation
+3. Use Python Script for Automation
 
 To make workflow reproducible for local setup, use the script at: scripts/retrieve.py.
 
@@ -161,6 +161,7 @@ One-hot encoding was used to featurize the protein sequences because it provides
 #### Steps to featurise the data:
 
 1. Sequence Labeling and Dataset Construction
+   
 ```
 epitope_sequences = []
 non_epitope_sequences = []
@@ -184,7 +185,8 @@ for non_epitope in non_epitope_sequences:
     labels.append(0)
 ```
 
-1. One-Hot Encoding of Amino Acid Sequences
+2. One-Hot Encoding of Amino Acid Sequences
+
 ```
 import numpy as np
 
@@ -202,7 +204,8 @@ def one_hot_encode_sequence(sequence):
     return one_hot_matrix
 ```
 
-1. Encoding and Dataset Finalization
+3. Encoding and Dataset Finalization
+   
 ```
 # Combine and label
 X = []
@@ -219,18 +222,21 @@ for seq in non_epitope_sequences:
     y.append(0)
 ```
 
-1. Prepare Data for Modeling
+4. Prepare Data for Modeling
+   
 ```
 X = np.array(X, dtype=object)  # Use object type because sequences is of different lengths
 y = np.array(y)
 ```
 
-1. Save the featurised data for reference
+5. Save the featurised data for reference
+   
 ```
 np.save('../data/X_featurized.npy', X)
 np.save('../data/y_labels.npy', y)
 ```
-1. Use Python Script for Automation
+
+6. Use Python Script for Automation
 
 To make workflow reproducible for local setup, use the script at: scripts/preprocess.py.
 
@@ -249,6 +255,7 @@ Given the highly imbalanced nature of the dataset, XGBoost was chosen for its ro
 
 #### Steps to train a model
 1. Sequence Padding for Uniform Input Size
+   
 ```
 def pad_sequences_custom(sequences, maxlen, padding_value=0):
     padded_sequences = np.full((len(sequences), maxlen), padding_value, dtype=np.float32)
@@ -263,10 +270,12 @@ X_padded_custom = pad_sequences_custom(X, maxlen=4096)
 ```
 
 1. Split train and test data
+   
 ```
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X_padded_custom, y, test_size=0.2, random_state=42, stratify=y)
 ```
+
 Training set size: 2848
 Test set size: 712
 
@@ -300,12 +309,14 @@ Once the model is trained, it’s crucial to evaluate its performance using diff
 #### Steps to evaluate the model
 
 1. Model prediction
+   
 ```
 y_pred = model.predict(X_test)
 y_prob = model.predict_proba(X_test)[:, 1]
 ```
 
 1. Model Evaluation Metrics
+   
 ```
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, classification_report
 
@@ -346,6 +357,7 @@ Classification Report:
 import joblib
 joblib.dump(model, "../models/epitope_model.pkl")
 ```
+
 ### Model Summary
 
 After training the XGBoost model, it achieved:
@@ -383,7 +395,7 @@ Make predictions
 `y_pred = model.predict(x_test)`
 
 ### Host the Model Directly in the Cloud
-1.Launch an EC2 Instance on AWS
+1. Launch an EC2 Instance on AWS
 
 - Choose an appropriate instance type (e.g., t3.medium because of data size).
 
@@ -391,9 +403,10 @@ Make predictions
 
 - SSH into the instance and set up the [environment](#setting-the-environment)
 
-1. Set Up FastAPI Server:
-   
-Create a simple FastAPI application that loads the saved model and exposes an endpoint for predictions.
+2. Clone the repository where the trained model is saved to the EC2 instance
+3. Set Up FastAPI Server:
+
+Create a simple FastAPI application that loads the saved model and exposes an endpoint for predictions, ./app/main.py
 
 `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
 
@@ -436,6 +449,7 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 3. Build and Run the Docker Image in Cloud environment
+   
 ```
 docker build -t epitope-model-api .
 docker run -p 8000:8000 epitope-model-api
@@ -450,7 +464,9 @@ Navigate to:
 App is containerized making it portable and consistent across environments. It successfully eliminated the need to manually set up Python environments in different systems. Now Lets automate this!
 
 ### Automate the Deployment with GitHub Actions
+
 1. Create a `github/workflows/deployment.yaml`
+   
 ```
 name: Build and Deploy to EC2
 
