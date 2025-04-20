@@ -1,6 +1,6 @@
 ## Epitope Prediction Model
 
-Cloud-hosted ML model for predicting epitope regions on protein sequences, making it ccessible, fast, and researcher-friendly.
+Cloud-hosted ML model for predicting epitope regions on protein sequences, making it accessible, fast, and researcher-friendly.
 
 A model that predicts the epitope regions on a protein sequence, helping researchers identify which parts of an antigen can trigger an immune response, which is of primary importance in vaccine and antibody development.
 
@@ -47,6 +47,10 @@ create a conda environment:
 activate the environment:
   
 `conda activate epitope`
+
+Install the required libraries using pip:
+
+`pip install fastapi uvicorn joblib numpy scikit-learn xgboost python-multipart`
 
 ### Project Structure
 ``` text
@@ -395,11 +399,12 @@ Make predictions
 `y_pred = model.predict(x_test)`
 
 ### Host the Model Directly in the Cloud
+
 1. Launch an EC2 Instance on AWS
 
 - Choose an appropriate instance type (e.g., t3.medium because of data size).
 
-- Configure the security group to allow inbound traffic on port 8000 or 0.0.0.0 for testing.
+- Configure the security group to allow inbound traffic on port 8000 from 0.0.0.0 for testing.
 
 - SSH into the instance and set up the [environment](#setting-the-environment)
 
@@ -414,7 +419,7 @@ Create a simple FastAPI application that loads the saved model and exposes an en
    
 Navigate to:
 
-`http://<ec2-public-ip>:8000/docs`
+`http://<ec2-public-ip>:8000`
 
 This opens the interactive Swagger UI where you can test your API.
 
@@ -431,6 +436,7 @@ joblib
 numpy
 scikit-learn
 xgboost
+python-multipart
 ```
 
 2. Create a `Dockerfile`
@@ -459,13 +465,13 @@ docker run -p 8000:8000 epitope-model-api
    
 Navigate to:
 
-`http://<ec2-public-ip>:8000/docs`
+`http://<ec2-public-ip>:8000`
 
 App is containerized making it portable and consistent across environments. It successfully eliminated the need to manually set up Python environments in different systems. Now Lets automate this!
 
 ### Automate the Deployment with GitHub Actions
 
-1. Create a `github/workflows/deployment.yaml`
+1. Create a new file `github/workflows/deployment.yaml` with the following contents:
    
 ```
 name: Build and Deploy to EC2
@@ -510,8 +516,34 @@ jobs:
           docker rm epitope-api || true
           docker run -d --name epitope-api -p 8000:8000 ${{ secrets.DOCKER_USERNAME }}/epitope-model-api:latest
 ```
+This workflow is triggered whenever there is a push to the main branch. It automatically:
 
-This workflow triggers everytime there is a push to the repository. It will automatically containerize the app, pushed to dockerhub and deploy it on EC2 that is already provisioned. This eliminate the need to deploy manually deploy everytime there is change to the code
+- Containerizes your application,
+
+- Pushes it to DockerHub,
+
+- Deploys it on your EC2 instance.
+
+This process eliminates the need to manually deploy the application every time there is a code change, streamlining the workflow.
+
+2. GitHub Secrets Configuration
+
+In the GitHub repository, the following secrets need to be configured to ensure the pipeline works:
+
+- DOCKER_USERNAME
+- DOCKER_PASSWORD
+- EC2_SSH_KEY: The private SSH key or .pem file used to connect to the EC2 instance
+- EC2_PUBLIC_IP
+
+To add these secrets:
+
+- Navigate to the repository’s settings
+
+- Select Secrets from the sidebar
+
+- Add the keys above with their corresponding values
+
+With these secrets in place, GitHub Actions pipeline can securely authenticate and deploy to EC2.
 
 #### Suggestions
 - Automate EC2 Provisioning: While it is currently deploying to an existing EC2 instance, we could automate the provisioning of the EC2 instance using Terraform or AWS CloudFormation. This ensures that infrastructure is version-controlled and reproducible.
